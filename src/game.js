@@ -37,11 +37,11 @@ let startScreen;
 
 // Game State
 const Parts = {
-    SCRAP: 'Scrap',
-    WIRES: 'Wires',
-    BOARD: 'Board',
-    CIRCUIT: 'Circuit', // Wires + Board
-    CHASSIS: 'Chassis'  // Scrap
+    RED: 'Vermelho',
+    BLUE: 'Azul',
+    YELLOW: 'Amarelo',
+    PURPLE: 'Roxo',   // Vermelho + Azul
+    GREEN: 'Verde'    // Amarelo Processado
 };
 
 let stations = [];
@@ -188,20 +188,16 @@ function handleInteraction() {
 
 function pickUpItem(itemName, scene) {
     heldItem = itemName;
-    let frame = 0;
-    if (itemName === Parts.SCRAP) frame = 0;
-    if (itemName === Parts.WIRES) frame = 1;
-    if (itemName === Parts.BOARD) frame = 2;
-    if (itemName === Parts.CHASSIS) frame = 3; // Let's use 3 and call it Chassis for now
-    if (itemName === Parts.CIRCUIT) frame = 2; // Let's simplify and use Board look for Circuit too
 
-    itemSprite = scene.add.sprite(player.x, player.y - 40, 'parts', frame);
+    itemSprite = scene.add.sprite(player.x, player.y - 40, 'parts', 0);
     itemSprite.setScale(0.08);
 
-    // Se for um circuito, adiciona um brilho verde
-    if (itemName === Parts.CIRCUIT) {
-        itemSprite.setTint(0x4ade80);
-    }
+    // Aplica a cor baseada no nome da peça
+    if (itemName === Parts.RED) itemSprite.setTint(0xef4444);
+    else if (itemName === Parts.BLUE) itemSprite.setTint(0x3b82f6);
+    else if (itemName === Parts.YELLOW) itemSprite.setTint(0xfacc15);
+    else if (itemName === Parts.PURPLE) itemSprite.setTint(0xa855f7);
+    else if (itemName === Parts.GREEN) itemSprite.setTint(0x22c55e);
 }
 
 function dropItem() {
@@ -213,14 +209,14 @@ function dropItem() {
 }
 
 function createStations(scene) {
-    // Supply Boxes
-    stations.push(new SupplyStation(scene, 100, 100, Parts.SCRAP, 0x475569));
-    stations.push(new SupplyStation(scene, 100, 200, Parts.WIRES, 0x475569));
-    stations.push(new SupplyStation(scene, 100, 300, Parts.BOARD, 0x475569));
+    // Supply Boxes - Agora com cores claras
+    stations.push(new SupplyStation(scene, 100, 100, Parts.RED, 0xef4444));
+    stations.push(new SupplyStation(scene, 100, 200, Parts.BLUE, 0x3b82f6));
+    stations.push(new SupplyStation(scene, 100, 300, Parts.YELLOW, 0xfacc15));
 
-    // Processing Stations
-    stations.push(new ProcessingStation(scene, 700, 200, 'PRESS', Parts.SCRAP, Parts.CHASSIS, 0x334155));
-    stations.push(new ProcessingStation(scene, 700, 400, 'WELD', [Parts.WIRES, Parts.BOARD], Parts.CIRCUIT, 0x334155));
+    // Processing Stations - Receitas simples
+    stations.push(new ProcessingStation(scene, 700, 200, 'PRENSA', Parts.YELLOW, Parts.GREEN, 0x334155));
+    stations.push(new ProcessingStation(scene, 700, 400, 'SOLDA', [Parts.RED, Parts.BLUE], Parts.PURPLE, 0x334155));
 
     // Client Dock
     stations.push(new DeliveryStation(scene, 400, 550, 0x1e293b));
@@ -363,9 +359,16 @@ function handleClientSpawning(time, scene) {
 }
 
 function spawnClient(scene) {
-    if (clients.length >= 3) return; // Max 3 clients
+    if (clients.length >= 3) return;
 
-    let needs = Phaser.Math.Between(0, 1) === 0 ? [Parts.CHASSIS] : [Parts.CIRCUIT, Parts.CHASSIS];
+    // Clientes pedem cores específicas
+    const possibleNeeds = [
+        [Parts.GREEN],
+        [Parts.PURPLE],
+        [Parts.GREEN, Parts.PURPLE]
+    ];
+    let needs = Phaser.Utils.Array.GetRandom(possibleNeeds);
+
     let client = new RobotClient(scene, needs);
     clients.push(client);
 
@@ -390,10 +393,21 @@ class RobotClient {
         this.sprite = scene.add.sprite(0, 0, 'clients', Phaser.Math.Between(0, 3));
         this.sprite.setScale(0.12);
 
-        this.thoughtBubble = scene.add.rectangle(0, -50, 60, 40, 0xffffff).setAlpha(0.8);
-        this.needText = scene.add.text(0, -50, needs.join('\n'), { fontSize: '8px', color: '#000' }).setOrigin(0.5);
+        this.thoughtBubble = scene.add.rectangle(0, -60, 80, 50, 0xffffff).setAlpha(0.9).setStrokeStyle(2, 0x000000);
+        this.needText = scene.add.text(0, -60, needs.join(' + \n'), {
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#000',
+            align: 'center'
+        }).setOrigin(0.5);
 
-        this.patienceBar = scene.add.rectangle(0, -80, 50, 6, 0x22c55e);
+        // Adiciona um pequeno ícone colorido no balão
+        needs.forEach((n, i) => {
+            let color = 0x000000;
+            if (n === Parts.GREEN) color = 0x22c55e;
+            if (n === Parts.PURPLE) color = 0xa855f7;
+            scene.add.circle(this.container.x + (i * 20 - 10), this.container.y - 85, 5, color);
+        });
 
         this.container.add([this.sprite, this.thoughtBubble, this.needText, this.patienceBar]);
     }
