@@ -197,6 +197,11 @@ function pickUpItem(itemName, scene) {
 
     itemSprite = scene.add.sprite(player.x, player.y - 40, 'parts', frame);
     itemSprite.setScale(0.08);
+
+    // Se for um circuito, adiciona um brilho verde
+    if (itemName === Parts.CIRCUIT) {
+        itemSprite.setTint(0x4ade80);
+    }
 }
 
 function dropItem() {
@@ -410,11 +415,42 @@ class RobotClient {
 
         this.scene.events.emit('updateScore', scoreBonus);
 
+        // Texto de pontos flutuante
+        let txt = this.scene.add.text(this.container.x, this.container.y - 50, `+${scoreBonus}`, {
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#4ade80',
+            fontFamily: 'Outfit'
+        }).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: txt,
+            y: txt.y - 100,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => txt.destroy()
+        });
+
+        // Efeito "Feliz" e saída
+        this.thoughtBubble.destroy();
+        this.needText.destroy();
+        this.patienceBar.destroy();
+
         this.scene.tweens.add({
             targets: this.container,
-            x: 900,
-            duration: 1500,
-            onComplete: () => this.destroy()
+            scale: 1.2,
+            y: this.container.y - 20,
+            duration: 200,
+            yoyo: true,
+            onComplete: () => {
+                this.scene.tweens.add({
+                    targets: this.container,
+                    x: 900,
+                    alpha: 0,
+                    duration: 1000,
+                    onComplete: () => this.destroy()
+                });
+            }
         });
     }
 
