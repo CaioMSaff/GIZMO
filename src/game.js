@@ -401,15 +401,18 @@ class RobotClient {
             align: 'center'
         }).setOrigin(0.5);
 
-        // Adiciona um pequeno ícone colorido no balão
+        this.patienceBar = scene.add.rectangle(0, -90, 50, 6, 0x22c55e);
+
+        this.container.add([this.sprite, this.thoughtBubble, this.needText, this.patienceBar]);
+
+        // Adiciona um pequeno ícone colorido no balão (agora DENTRO do container)
         needs.forEach((n, i) => {
             let color = 0x000000;
             if (n === Parts.GREEN) color = 0x22c55e;
             if (n === Parts.PURPLE) color = 0xa855f7;
-            scene.add.circle(this.container.x + (i * 20 - 10), this.container.y - 85, 5, color);
+            let dot = scene.add.circle(i * 20 - 10, -85, 5, color);
+            this.container.add(dot);
         });
-
-        this.container.add([this.sprite, this.thoughtBubble, this.needText, this.patienceBar]);
     }
 
     needsItem(item) {
