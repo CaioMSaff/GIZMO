@@ -227,12 +227,16 @@ function createStations(scene) {
 }
 
 function findNearestStation() {
-    let bestDist = 80; // Aumentado para facilitar a interação
     let best = null;
+    let minDistance = 999;
+
     stations.forEach(s => {
         let d = Phaser.Math.Distance.Between(player.x, player.y, s.x, s.y);
-        if (d < bestDist) {
-            bestDist = d;
+        // Aumenta o raio para a DeliveryStation (150px) pois ela é um balcão largo
+        let threshold = (s instanceof DeliveryStation) ? 150 : 80;
+
+        if (d < threshold && d < minDistance) {
+            minDistance = d;
             best = s;
         }
     });
@@ -338,12 +342,12 @@ class DeliveryStation {
         scene.add.text(x, y, 'DELIVERY ZONE', { fontSize: '16px', color: '#fecdd3' }).setOrigin(0.5);
     }
     canAccept(item) {
-        // Correção: Usar container.x/y para verificar a distância real na tela
-        let activeClient = clients.find(c => Phaser.Math.Distance.Between(this.x, this.y, c.container.x, c.container.y) < 150);
+        // Encontra o cliente que está na zona de entrega (X entre 200 e 600)
+        let activeClient = clients.find(c => c.container.y > 450 && Math.abs(c.container.x - 400) < 200);
         return !!activeClient && activeClient.needsItem(item);
     }
     receiveItem(item) {
-        let activeClient = clients.find(c => Phaser.Math.Distance.Between(this.x, this.y, c.container.x, c.container.y) < 150);
+        let activeClient = clients.find(c => c.container.y > 450 && Math.abs(c.container.x - 400) < 200);
         if (activeClient) {
             activeClient.giveItem(item);
         }
